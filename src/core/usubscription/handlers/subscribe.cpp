@@ -3,3 +3,7 @@
 //
 
 #include "../../../../include/up-cpp/core/usubscription/handlers/subscribe.h"
+std::optional<uprotocol::datamodel::builder::Payload> subscribe(
+    const uprotocol::v1::UMessage&) {
+
+};
