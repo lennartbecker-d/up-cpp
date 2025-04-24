@@ -6,7 +6,7 @@
 #define CONFIGURATION_H
 #include <string>
 
-namespace uprotocol::core::usubscription {
+namespace uprotocol::core::usubscription::v3 {
 	struct USubscriptionConfiguration {
 
 		USubscriptionConfiguration create(std::string, size_t, size_t);
@@ -18,5 +18,5 @@ namespace uprotocol::core::usubscription {
 	};
 
 
-}
+} // namespace uprotocol::core::usubscription::v3
 #endif //CONFIGURATION_H
