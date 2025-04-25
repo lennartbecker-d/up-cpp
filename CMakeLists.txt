@@ -48,7 +48,15 @@ endif()
 
 file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-add_library(${PROJECT_NAME} ${SRC_FILES})
+add_library(${PROJECT_NAME} ${SRC_FILES}
+		src/core/usubscription/usubscription.cpp
+		include/up-cpp/core/usubscription/usubscription.h
+		src/core/usubscription/subscription_manager.cpp
+		include/up-cpp/core/usubscription/subscription_manager.h
+		src/core/usubscription/handlers/subscribe.cpp
+		include/up-cpp/core/usubscription/handlers/subscribe.h
+		src/core/usubscription/configuration.cpp
+		include/up-cpp/core/usubscription/configuration.h)
 add_library(up-cpp::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME}
