@@ -3,6 +3,7 @@
 
 #include <up-cpp/transport/UTransport.h>
 #include <uprotocol/core/usubscription/v3/usubscription.pb.h>
+#include "configuration.h"
 
 namespace uprotocol::core::usubscription::v3 {
     
@@ -19,18 +20,9 @@ struct RemoveSubscription {
     // Sender<int> respond_to;
 };
 
-// struct FetchSubscribers {
-//     v1::UUri topic;
-//     std::optional<uint32_t> offset;
-//     // Sender<int> respond_to;
-// };
-
-// struct FetchSubscriptions {
-//     int request{};  // Assuming some type RequestKind
-//     std::optional<uint32_t> offset;
-//     // Sender<int> respond_to{};
-// };
 using SubscriptionEvent = std::variant<AddSubscription, RemoveSubscription>;
+
+    void handle_message(const USubscriptionConfiguration& configuration, const transport::UTransport& transport, const SubscriptionEvent& command_receiver);
 
 } // namespace uprotocol::core::usubscription::v3
 

@@ -1,4 +1,5 @@
 #include "../../../../include/up-cpp/core/usubscription/handlers/subscribe.h"
+#include <uprotocol/v1/ustatus.pb.h>
 #include "up-cpp/datamodel/builder/Payload.h"
 
 
@@ -31,7 +32,8 @@ std::pair<uprotocol::datamodel::builder::Payload, uprotocol::v1::UUri> extract_i
     if (!payload) {
         throw ServiceInvocationError::InvalidArgument("No request payload");
     }
-    auto request = payload;
+
+    std::optional<uprotocol::datamodel::builder::Payload> request;
     try {
     // TODO(lennart)
         // request = payload.extract_protobuf()
@@ -45,6 +47,7 @@ std::pair<uprotocol::datamodel::builder::Payload, uprotocol::v1::UUri> extract_i
         throw ServiceInvocationError::InvalidArgument("No request source uri");
     }
 
+    // TODO(lennart) get corresponding request Payload Constructor, in Rust MessageFull is used, that originates from: request = payload.extract_protobuf()...
     return {uprotocol::datamodel::builder::Payload(request), uprotocol::v1::UUri(source)};
 
 }
@@ -52,7 +55,7 @@ std::pair<uprotocol::datamodel::builder::Payload, uprotocol::v1::UUri> extract_i
 
 namespace uprotocol::core::usubscription::handlers {
 
-std::optional<datamodel::builder::Payload> subscribe(const v1::UMessage& message) {
+utils::Expected<datamodel::builder::Payload, v1::UStatus> subscribe(const v1::UMessage& message) {
     uint16_t expected_resource_id = 0;
     uint16_t received_resource_id = 0;
 
@@ -74,20 +77,20 @@ std::optional<datamodel::builder::Payload> subscribe(const v1::UMessage& message
     };
 
     try {
-        // Send subscription with se from v3::SubscriptionEvent
+        // Send subscription with se from v3::SubscriptionEvent with subscription_sender from struct SubscriptionRequestHandler
     } catch (const std::exception& e) {
         std::cerr << "Error communicating with subscription manager: " << e.what() << std::endl;
-        throw ServiceInvocationError("Error processing request");
+        return ServiceInvocationError("Error processing request"); // UStatus zurückgeben
     }
     try {
         // Receive asynchronos response, retrieve subscription status (UStatus?)
     } catch (const std::exception& e) {
         std::cerr << "Error processing request: " << e.what() << std::endl;
-        throw ServiceInvocationError("Error processing request");
+        return ServiceInvocationError("Error processing request");
     }
 
     // Notify update channel
-    // -> NotificationEvent StateChange
+    // -> NotificationEvent StateChange/ Use notification_sender from struct SubscriptionRequestHandler
     
     // Build and return result 
     std::string test_payload_str = "test_payload";
@@ -98,7 +101,7 @@ std::optional<datamodel::builder::Payload> subscribe(const v1::UMessage& message
             uprotocol::v1::UPayloadFormat::UPAYLOAD_FORMAT_TEXT);
         } catch (const std::exception& e) {
         std::cerr << "Error building response payload: " << e.what() << std::endl;
-        throw ServiceInvocationError("Error building response payload");
+        return ServiceInvocationError("Error building response payload");
     }
     
     return response_payload;

@@ -10,7 +10,7 @@
 // 	const v1::UMessage&)>;
 namespace uprotocol::core::usubscription::handlers{
 
-std::optional<datamodel::builder::Payload> subscribe(const v1::UMessage& message);
+utils::Expected<datamodel::builder::Payload, v1::UStatus> subscribe(const v1::UMessage& message);
 
 } // namespace uprotocol::core::usubscription::handlers
 
