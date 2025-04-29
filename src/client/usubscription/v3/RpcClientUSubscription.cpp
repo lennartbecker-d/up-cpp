@@ -43,6 +43,9 @@ void RpcClientUSubscription::Subscribe(
 
 		rpc_handle_ = rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
 
+		auto result = communication::Subscriber::subscribe(
+			transport_, subscription_topic_, std::move(callback)); // TODO(lennart) callback? 
+
 		if (static_cast<int>(rpc_handle_.isConnected()) == v1::OK) {		// TODO(lennart): check if this is correct
 			response->CopyFrom(rpc_handle_.value);  // Copy data to the response
 		} else {
