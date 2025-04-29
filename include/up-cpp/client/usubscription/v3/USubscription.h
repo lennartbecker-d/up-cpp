@@ -1,10 +1,6 @@
-//
-// Created by max on 28.04.25.
-//
-
 #ifndef USUBSCRIPTION_H
 #define USUBSCRIPTION_H
-#include "RpcClientUSubscription.h"
+#include <uprotocol/core/usubscription/v3/usubscription.pb.h>
 
 namespace uprotocol::core::usubscription::v3 {
 
