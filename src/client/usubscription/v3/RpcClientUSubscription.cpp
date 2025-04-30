@@ -39,7 +39,7 @@ void RpcClientUSubscription::Subscribe(
 	};
 
 	try {
-		auto payload = datamodel::builder::Payload(request);
+		auto payload = datamodel::builder::Payload(*request);
 
 		rpc_handle_ = rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
 
