@@ -131,7 +131,7 @@ void RpcClientUSubscription::Subscribe(
 
 	// response->CopyFrom(rpc_handle_.value);	
 
-	auto subscription_callback = someCallBack;
+	auto subscription_callback = someCallBack; // TODO(lennart) update with correct callback
 	// Create a L2 subscription
 	auto result = communication::Subscriber::subscribe(
 	    transport_, subscription_topic_, std::move(subscription_callback));
@@ -143,7 +143,9 @@ void RpcClientUSubscription::Subscribe(
 		// return status;
 		done->Run();
 	}
+
 	controller->SetFailed("result.error()");
+	
 	done->Run();
 }
 
