@@ -10,6 +10,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <up-cpp/client/usubscription/v3/RpcClientUSubscription.h>
+#include <up-cpp/client/usubscription/v3/USubscription.h>
 #include <uprotocol/core/usubscription/v3/usubscription.pb.h>
 
 #include <utility>
@@ -100,11 +101,12 @@ void RpcClientUSubscription::Subscribe(
 	::google::protobuf::Closure* done) {
 	
 	constexpr uint16_t RESOURCE_ID_SUBSCRIBE = 0x0001;
+	// TODO(lennart) see default_call_options() for the request in Rust
 	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
 	auto subscription_request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
 	auto priority = uprotocol::v1::UPriority::UPRIORITY_CS4; // TODO(lennart) priority
 
-	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions();
+	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions(); // Might serve as default_call_options() in Rust
 
 
 	rpc_client_ = std::make_unique<communication::RpcClient>(
