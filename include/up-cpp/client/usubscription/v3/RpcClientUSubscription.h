@@ -117,7 +117,6 @@ struct RpcClientUSubscription : public uSubscription{
 	    utils::Expected<std::unique_ptr<RpcClientUSubscription>, v1::UStatus>;
 	using ListenCallback = transport::UTransport::ListenCallback;
 	using ListenHandle = transport::UTransport::ListenHandle;
-	using SubscriptionResponse = core::usubscription::v3::SubscriptionResponse;
 
 	/// @brief Create a subscription
 	///
@@ -140,6 +139,32 @@ struct RpcClientUSubscription : public uSubscription{
 	void Unsubscribe(google::protobuf::RpcController* controller,
 		const ::uprotocol::core::usubscription::v3::UnsubscribeRequest* request,
 		::uprotocol::core::usubscription::v3::UnsubscribeResponse* response,
+		::google::protobuf::Closure* done) override;
+	
+	/// @brief Fetch all subscriptions for a given topic or subscriber contained inside a [`FetchSubscriptionsRequest`]
+	void FetchSubscriptions(google::protobuf::RpcController* controller,
+		const ::uprotocol::core::usubscription::v3::FetchSubscriptionsRequest* request,
+		::uprotocol::core::usubscription::v3::FetchSubscriptionsResponse* response,
+		::google::protobuf::Closure* done) override;
+	
+	/// @brief Register for notifications relevant to a given topic inside a [`NotificationsRequest`]
+    /// changing in subscription status.
+	void RegisterForNotifications(google::protobuf::RpcController* controller,
+		const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
+		::uprotocol::core::usubscription::v3::NotificationsResponse* response,
+		::google::protobuf::Closure* done) override;
+	
+	/// @brief Unregister for notifications relevant to a given topic inside a [`NotificationsRequest`]
+    /// changing in subscription status.
+	void UnregisterForNotifications(google::protobuf::RpcController* controller,
+		const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
+		::uprotocol::core::usubscription::v3::NotificationsResponse* response,
+		::google::protobuf::Closure* done) override;
+
+	/// @brief Fetch a list of subscribers that are currently subscribed to a given topic in a [`FetchSubscribersRequest`]	
+	void FetchSubscribers(google::protobuf::RpcController* controller,
+		const ::uprotocol::core::usubscription::v3::FetchSubscribersRequest* request,
+		::uprotocol::core::usubscription::v3::FetchSubscribersResponse* response,
 		::google::protobuf::Closure* done) override;
 
 	/// @brief getter for subscription update
@@ -180,8 +205,12 @@ private:
 	// RPC request
 	std::unique_ptr<communication::RpcClient> rpc_client_;
 	communication::RpcClient::InvokeHandle rpc_handle_;
+
 	SubscriptionResponse subscription_response_;
 	UnsubscribeResponse unsubscribe_response_;
+	FetchSubscriptionsResponse fetch_subscription_response_;
+	NotificationsResponse notification_response_;
+	FetchSubscribersResponse fetch_subscribers_response_;
 
 	// L2 Subscriber details
 	std::unique_ptr<communication::Subscriber> subscriber_;

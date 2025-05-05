@@ -104,7 +104,7 @@ void RpcClientUSubscription::Subscribe(
 	// TODO(lennart) see default_call_options() for the request in Rust
 	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
 	auto subscription_request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
-	auto priority = uprotocol::v1::UPriority::UPRIORITY_CS4; // TODO(lennart) priority
+	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
 
 	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions(); // Might serve as default_call_options() in Rust
 
@@ -129,9 +129,7 @@ void RpcClientUSubscription::Subscribe(
 	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct, has been subscription_request before
 
 	rpc_handle_ =
-	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
-
-	// response->CopyFrom(rpc_handle_.value);	
+	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));	
 
 	auto subscription_callback = someCallBack; // TODO(lennart) update with correct callback
 	// Create a L2 subscription
@@ -166,7 +164,7 @@ void RpcClientUSubscription::Unsubscribe(
 	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
 	constexpr uint16_t RESOURCE_ID_UNSUBSCRIBE = 0x0002;
 	auto request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
-	auto priority = uprotocol::v1::UPriority::UPRIORITY_CS4; // TODO(lennart) priority
+	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
 	
 	rpc_client_ = std::make_unique<communication::RpcClient>(
 	    transport_, uSubscriptionUUriBuilder_.getServiceUriWithResourceId(RESOURCE_ID_UNSUBSCRIBE),
@@ -176,21 +174,172 @@ void RpcClientUSubscription::Unsubscribe(
 		if (maybe_response.has_value() &&
 		    maybe_response.value().has_payload()) {
 			if (response->ParseFromString(maybe_response.value().payload())) {
-				// if (response->topic().SerializeAsString() == // TODO(lennart) see if this check is somehow possible
-				//     subscription_topic_.SerializeAsString()) { 
+				if (response->SerializeAsString() == // TODO(lennart) topic specific? See subscribe
+				    subscription_topic_.SerializeAsString()) { 
 					unsubscribe_response_ = *response;
-				// }
+				}
 			}
 		}
 	};
 
 	// UnsubscribeRequest const unsubscribe_request = buildUnsubscriptionRequest();
-	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct, has been subscription_request before
-
+	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct
 	rpc_handle_ =
 	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
 
 	subscriber_.reset();
+
+	done->Run();	
+}
+
+void RpcClientUSubscription::FetchSubscriptions(
+	google::protobuf::RpcController* controller,
+	const ::uprotocol::core::usubscription::v3::FetchSubscriptionsRequest* request,
+	::uprotocol::core::usubscription::v3::FetchSubscriptionsResponse* response,
+	::google::protobuf::Closure* done) {
+	
+	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
+	constexpr uint16_t RESOURCE_ID_FETCH_SUBSCRIPTIONS = 0x0003;
+	auto request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
+	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
+	
+	rpc_client_ = std::make_unique<communication::RpcClient>(
+	    transport_, uSubscriptionUUriBuilder_.getServiceUriWithResourceId(RESOURCE_ID_FETCH_SUBSCRIPTIONS),
+	    priority, request_ttl);
+
+	auto on_response = [this, response](const auto& maybe_response) {
+		if (maybe_response.has_value() &&
+		    maybe_response.value().has_payload()) {
+			if (response->ParseFromString(maybe_response.value().payload())) {
+				if (response->SerializeAsString() == // TODO(lennart) topic specific? See subscribe
+				    subscription_topic_.SerializeAsString()) { 
+					fetch_subscription_response_ = *response;
+				}
+			}
+		}
+	};
+
+	// FetchSubscriptionsRequest const fetch_subscriptions_request = buildFetchSubscriptionsRequest();
+	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct
+
+	rpc_handle_ =
+	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
+
+	// TODO(lennart) any handle for the response?
+
+	done->Run();	
+}
+
+void RpcClientUSubscription::RegisterForNotifications(
+	google::protobuf::RpcController* controller,
+	const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
+	::uprotocol::core::usubscription::v3::NotificationsResponse* response,
+	::google::protobuf::Closure* done) {
+	
+	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
+	constexpr uint16_t RESOURCE_ID_REGISTER_FOR_NOTIFICATIONS = 0x0006;
+	auto request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
+	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
+	
+	rpc_client_ = std::make_unique<communication::RpcClient>(
+	    transport_, uSubscriptionUUriBuilder_.getServiceUriWithResourceId(RESOURCE_ID_REGISTER_FOR_NOTIFICATIONS),
+	    priority, request_ttl);
+
+	auto on_response = [this, response](const auto& maybe_response) {
+		if (maybe_response.has_value() &&
+		    maybe_response.value().has_payload()) {
+			if (response->ParseFromString(maybe_response.value().payload())) {
+				if (response->SerializeAsString() == // TODO(lennart) topic specific? See subscribe
+				    subscription_topic_.SerializeAsString()) { 
+						notification_response_ = *response;
+				}
+			}
+		}
+	};
+
+	// NotificationsRequest const register_notifications_request = buildRegisterNotificationsRequest();
+	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct
+
+	rpc_handle_ =
+	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
+
+	// TODO(lennart) any handle for the response?
+
+	done->Run();	
+}
+
+void RpcClientUSubscription::UnregisterForNotifications(
+	google::protobuf::RpcController* controller,
+	const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
+	::uprotocol::core::usubscription::v3::NotificationsResponse* response,
+	::google::protobuf::Closure* done) {
+	
+	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
+	constexpr uint16_t RESOURCE_ID_UNREGISTER_FOR_NOTIFICATIONS = 0x0007;
+	auto request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
+	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
+	
+	rpc_client_ = std::make_unique<communication::RpcClient>(
+	    transport_, uSubscriptionUUriBuilder_.getServiceUriWithResourceId(RESOURCE_ID_UNREGISTER_FOR_NOTIFICATIONS),
+	    priority, request_ttl);
+
+	auto on_response = [this, response](const auto& maybe_response) {
+		if (maybe_response.has_value() &&
+		    maybe_response.value().has_payload()) {
+			if (response->ParseFromString(maybe_response.value().payload())) {
+				if (response->SerializeAsString() == // TODO(lennart) topic specific? See subscribe
+				    subscription_topic_.SerializeAsString()) { 
+						notification_response_ = *response;
+				}
+			}
+		}
+	};
+
+	// NotificationsRequest const unregister_notifications_request = buildUnregisterNotificationsRequest();
+	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct
+
+	rpc_handle_ =
+	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
+
+	// TODO(lennart) any handle for the response?
+
+	done->Run();	
+}
+
+void RpcClientUSubscription::FetchSubscribers(
+	google::protobuf::RpcController* controller,
+	const ::uprotocol::core::usubscription::v3::FetchSubscribersRequest* request,
+	::uprotocol::core::usubscription::v3::FetchSubscribersResponse* response,
+	::google::protobuf::Closure* done) {
+	
+	constexpr int REQUEST_TTL_TIME = 0x8000; // TODO(lennart) time?
+	constexpr uint16_t RESOURCE_ID_FETCH_SUBSCRIBERS = 0x0008;
+	auto request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
+	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
+	
+	rpc_client_ = std::make_unique<communication::RpcClient>(
+	    transport_, uSubscriptionUUriBuilder_.getServiceUriWithResourceId(RESOURCE_ID_FETCH_SUBSCRIBERS),
+	    priority, request_ttl);
+
+	auto on_response = [this, response](const auto& maybe_response) {
+		if (maybe_response.has_value() &&
+		    maybe_response.value().has_payload()) {
+			if (response->ParseFromString(maybe_response.value().payload())) {
+				if (response->SerializeAsString() == // TODO(lennart) topic specific? See subscribe
+				    subscription_topic_.SerializeAsString()) { 
+						fetch_subscribers_response_ = *response;
+				}
+			}
+		}
+	};
+	
+	// FetchSubscribersRequest const fetch_subscribers_request = buildFetchSubscribersRequest();
+	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct
+
+	rpc_handle_ =
+	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
+
+	// TODO(lennart) any handle for the response?
 
 	done->Run();	
 }
