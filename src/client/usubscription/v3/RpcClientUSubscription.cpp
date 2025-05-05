@@ -33,29 +33,32 @@ RpcClientUSubscription::RpcClientUSubscription(std::shared_ptr<uprotocol::transp
 	uSubscriptionUUriBuilder_ = USubscriptionUUriBuilder();
 }
 
-// [[nodiscard]] RpcClientUSubscription::RpcClientUSubscriptionOrStatus RpcClientUSubscription::create(
-//     std::shared_ptr<transport::UTransport> transport,
-//     const v1::UUri& subscription_topic, ListenCallback&& callback,
-//     v1::UPriority priority, std::chrono::milliseconds subscription_request_ttl,
-//     RpcClientUSubscriptionOptions rpc_client_usubscription_options) {
-// 	auto rpc_client_usubscription = std::make_unique<RpcClientUSubscription>(
-// 	    std::forward<std::shared_ptr<transport::UTransport>>(transport),
-// 	    std::forward<const v1::UUri>(subscription_topic),
-// 	    std::forward<RpcClientUSubscriptionOptions>(rpc_client_usubscription_options));
+[[nodiscard]] RpcClientUSubscription::RpcClientUSubscriptionOrStatus RpcClientUSubscription::create(
+    std::shared_ptr<transport::UTransport> transport,
+    const v1::UUri& subscription_topic, ListenCallback&& callback,
+    RpcClientUSubscriptionOptions rpc_client_usubscription_options) {
+	auto rpc_client_usubscription = std::make_unique<RpcClientUSubscription>(
+	    std::forward<std::shared_ptr<transport::UTransport>>(transport),
+	    std::forward<const v1::UUri>(subscription_topic),
+	    std::forward<RpcClientUSubscriptionOptions>(rpc_client_usubscription_options));
+	
+	google::protobuf::RpcController *controller = nullptr;
+	::uprotocol::core::usubscription::v3::SubscriptionRequest const *subscription_request = nullptr;
+	SubscriptionResponse *subscription_response = nullptr;
 
-// 	// Attempt to connect create notification sink for updates.
-// 	auto status = rpc_client_usubscription->createNotificationSink();
-// 	if (status.code() == v1::UCode::OK) {
-// 		status = rpc_client_usubscription->subscribe(priority, subscription_request_ttl,
-// 		                             std::move(callback));
-// 		if (status.code() == v1::UCode::OK) {
-// 			return RpcClientUSubscriptionOrStatus(std::move(rpc_client_usubscription));
-// 		}
-// 		return RpcClientUSubscriptionOrStatus(utils::Unexpected<v1::UStatus>(status));
-// 	}
-// 	// If connection fails, return the error status.
-// 	return RpcClientUSubscriptionOrStatus(utils::Unexpected<v1::UStatus>(status));
-// }
+	// Attempt to connect create notification sink for updates.
+	auto status = rpc_client_usubscription->createNotificationSink();
+	if (status.code() == v1::UCode::OK) {
+		rpc_client_usubscription->Subscribe(controller, subscription_request,
+			subscription_response, nullptr);
+		if (status.code() == v1::UCode::OK) {
+			return RpcClientUSubscriptionOrStatus(std::move(rpc_client_usubscription));
+		}
+		return RpcClientUSubscriptionOrStatus(utils::Unexpected<v1::UStatus>(status));
+	}
+	// If connection fails, return the error status.
+	return RpcClientUSubscriptionOrStatus(utils::Unexpected<v1::UStatus>(status));
+}
 
 v1::UStatus RpcClientUSubscription::createNotificationSink() {
 	auto notification_sink_callback = [this](const v1::UMessage& update) {
@@ -332,7 +335,7 @@ void RpcClientUSubscription::FetchSubscribers(
 			}
 		}
 	};
-	
+
 	// FetchSubscribersRequest const fetch_subscribers_request = buildFetchSubscribersRequest();
 	auto payload = datamodel::builder::Payload(*request); // TODO(lennart) check if request is correct
 

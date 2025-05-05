@@ -127,12 +127,10 @@ struct RpcClientUSubscription : public uSubscription{
 	/// @param priority Priority of the subscription request.
 	/// @param subscribe_request_ttl Time to live for the subscription request.
 	/// @param rpc_client_usubscription_options Additional details for uSubscription service.
-	// [[nodiscard]] static RpcClientUSubscriptionOrStatus create(
-	//     std::shared_ptr<transport::UTransport> transport,
-	//     const v1::UUri& subscription_topic, ListenCallback&& callback,
-	//     v1::UPriority priority,
-	//     std::chrono::milliseconds subscription_request_ttl,
-	//     RpcClientUSubscriptionOptions rpc_client_usubscription_options);
+	[[nodiscard]] static RpcClientUSubscriptionOrStatus create(
+	    std::shared_ptr<transport::UTransport> transport,
+	    const v1::UUri& subscription_topic, ListenCallback&& callback,
+	    RpcClientUSubscriptionOptions rpc_client_usubscription_options);
 
 	/// @brief Unsubscribe from the topic and call uSubscription service to
 	/// close the subscription.
