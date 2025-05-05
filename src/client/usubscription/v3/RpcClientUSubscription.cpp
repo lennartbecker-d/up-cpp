@@ -17,11 +17,6 @@
 
 namespace uprotocol::core::usubscription::v3 {
 
-void someCallBack(const uprotocol::v1::UMessage& message) {
-	// Print the message
-	std::cout << message.DebugString() << std::endl;
-}
-
 RpcClientUSubscription::RpcClientUSubscription(std::shared_ptr<uprotocol::transport::UTransport> transport,
                    v1::UUri subscription_topic,
                    RpcClientUSubscriptionOptions rpc_client_usubscription_options)
@@ -51,7 +46,7 @@ RpcClientUSubscription::RpcClientUSubscription(std::shared_ptr<uprotocol::transp
 	if (status.code() == v1::UCode::OK) {
 		rpc_client_usubscription->Subscribe(controller, subscription_request,
 			subscription_response, nullptr);
-		if (status.code() == v1::UCode::OK) {
+		if (controller == nullptr) {
 			return RpcClientUSubscriptionOrStatus(std::move(rpc_client_usubscription));
 		}
 		return RpcClientUSubscriptionOrStatus(utils::Unexpected<v1::UStatus>(status));
@@ -109,8 +104,6 @@ void RpcClientUSubscription::Subscribe(
 	auto subscription_request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
 	auto priority = uprotocol::v1::UPriority::UPRIORITY_UNSPECIFIED;
 
-	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions(); // Might serve as default_call_options() in Rust
-
 
 	rpc_client_ = std::make_unique<communication::RpcClient>(
 	    transport_, uSubscriptionUUriBuilder_.getServiceUriWithResourceId(RESOURCE_ID_SUBSCRIBE),
@@ -134,7 +127,10 @@ void RpcClientUSubscription::Subscribe(
 	rpc_handle_ =
 	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));	
 
-	auto subscription_callback = someCallBack; // TODO(lennart) update with correct callback
+	// TODO(lennart) any handle for the response?
+
+	// Question TODO(max): communication::Subscriber::subscribe(...) necessary? 
+	auto subscription_callback = nullptr; // TODO(lennart) update with correct callback
 	// Create a L2 subscription
 	auto result = communication::Subscriber::subscribe(
 	    transport_, subscription_topic_, std::move(subscription_callback));
@@ -147,7 +143,7 @@ void RpcClientUSubscription::Subscribe(
 		done->Run();
 	}
 
-	controller->SetFailed("result.error()");
+	controller->SetFailed("result.error()"); // TODO(lennart) method needs to be implemented
 	
 	done->Run();
 }
@@ -190,6 +186,8 @@ void RpcClientUSubscription::Unsubscribe(
 	rpc_handle_ =
 	    rpc_client_->invokeMethod(std::move(payload), std::move(on_response));
 
+	// TODO(lennart) any handle for the response?
+	
 	subscriber_.reset();
 
 	done->Run();	
