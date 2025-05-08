@@ -21,6 +21,7 @@
 #include <uprotocol/v1/umessage.pb.h>
 
 #include <utility>
+#include "up-cpp/client/usubscription/v3/USubscription.h"
 
 namespace uprotocol::core::usubscription::v3 {
 using uprotocol::core::usubscription::v3::SubscriptionRequest;
@@ -112,7 +113,7 @@ public:
 ///
 /// Like all L3 client APIs, the RpcClientUSubscription is a wrapper on top of the
 /// L2 Communication APIs and USubscription service.
-struct RpcClientUSubscription : public uSubscription{
+struct RpcClientUSubscription : public USubscription{
 	using RpcClientUSubscriptionOrStatus =
 	    utils::Expected<std::unique_ptr<RpcClientUSubscription>, v1::UStatus>;
 	using ListenCallback = transport::UTransport::ListenCallback;
@@ -127,61 +128,63 @@ struct RpcClientUSubscription : public uSubscription{
 	/// @param priority Priority of the subscription request.
 	/// @param subscribe_request_ttl Time to live for the subscription request.
 	/// @param rpc_client_usubscription_options Additional details for uSubscription service.
-	[[nodiscard]] static RpcClientUSubscriptionOrStatus create(
-	    std::shared_ptr<transport::UTransport> transport,
-	    const v1::UUri& subscription_topic, ListenCallback&& callback,
-	    RpcClientUSubscriptionOptions rpc_client_usubscription_options);
+	// [[nodiscard]] static RpcClientUSubscriptionOrStatus create(
+	//     std::shared_ptr<transport::UTransport> transport,
+	//     const v1::UUri& subscription_topic, ListenCallback&& callback,
+	//     RpcClientUSubscriptionOptions rpc_client_usubscription_options);
 
+	/// @brief Subscribe to the topic
+	///
+	utils::Expected<SubscriptionResponse, v1::UStatus> subscribe(const SubscriptionRequest& subscription_request) override;
+	// void subscribe(google::protobuf::RpcController* controller,
+	// 	const ::uprotocol::core::usubscription::v3::SubscriptionRequest* request,
+	// 	::uprotocol::core::usubscription::v3::SubscriptionResponse* response,
+	// 	::google::protobuf::Closure* done) override;
+	
 	/// @brief Unsubscribe from the topic and call uSubscription service to
 	/// close the subscription.
-	void Unsubscribe(google::protobuf::RpcController* controller,
-		const ::uprotocol::core::usubscription::v3::UnsubscribeRequest* request,
-		::uprotocol::core::usubscription::v3::UnsubscribeResponse* response,
-		::google::protobuf::Closure* done) override;
+	// void Unsubscribe(google::protobuf::RpcController* controller,
+	// 	const ::uprotocol::core::usubscription::v3::UnsubscribeRequest* request,
+	// 	::uprotocol::core::usubscription::v3::UnsubscribeResponse* response,
+	// 	::google::protobuf::Closure* done) override;
 	
-	/// @brief Fetch all subscriptions for a given topic or subscriber contained inside a [`FetchSubscriptionsRequest`]
-	void FetchSubscriptions(google::protobuf::RpcController* controller,
-		const ::uprotocol::core::usubscription::v3::FetchSubscriptionsRequest* request,
-		::uprotocol::core::usubscription::v3::FetchSubscriptionsResponse* response,
-		::google::protobuf::Closure* done) override;
+	// /// @brief Fetch all subscriptions for a given topic or subscriber contained inside a [`FetchSubscriptionsRequest`]
+	// void FetchSubscriptions(google::protobuf::RpcController* controller,
+	// 	const ::uprotocol::core::usubscription::v3::FetchSubscriptionsRequest* request,
+	// 	::uprotocol::core::usubscription::v3::FetchSubscriptionsResponse* response,
+	// 	::google::protobuf::Closure* done) override;
 	
-	/// @brief Register for notifications relevant to a given topic inside a [`NotificationsRequest`]
-    /// changing in subscription status.
-	void RegisterForNotifications(google::protobuf::RpcController* controller,
-		const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
-		::uprotocol::core::usubscription::v3::NotificationsResponse* response,
-		::google::protobuf::Closure* done) override;
+	// /// @brief Register for notifications relevant to a given topic inside a [`NotificationsRequest`]
+    // /// changing in subscription status.
+	// void RegisterForNotifications(google::protobuf::RpcController* controller,
+	// 	const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
+	// 	::uprotocol::core::usubscription::v3::NotificationsResponse* response,
+	// 	::google::protobuf::Closure* done) override;
 	
-	/// @brief Unregister for notifications relevant to a given topic inside a [`NotificationsRequest`]
-    /// changing in subscription status.
-	void UnregisterForNotifications(google::protobuf::RpcController* controller,
-		const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
-		::uprotocol::core::usubscription::v3::NotificationsResponse* response,
-		::google::protobuf::Closure* done) override;
+	// /// @brief Unregister for notifications relevant to a given topic inside a [`NotificationsRequest`]
+    // /// changing in subscription status.
+	// void UnregisterForNotifications(google::protobuf::RpcController* controller,
+	// 	const ::uprotocol::core::usubscription::v3::NotificationsRequest* request,
+	// 	::uprotocol::core::usubscription::v3::NotificationsResponse* response,
+	// 	::google::protobuf::Closure* done) override;
 
-	/// @brief Fetch a list of subscribers that are currently subscribed to a given topic in a [`FetchSubscribersRequest`]	
-	void FetchSubscribers(google::protobuf::RpcController* controller,
-		const ::uprotocol::core::usubscription::v3::FetchSubscribersRequest* request,
-		::uprotocol::core::usubscription::v3::FetchSubscribersResponse* response,
-		::google::protobuf::Closure* done) override;
-
-	/// @brief getter for subscription update
-	///
-	/// @return subscription update
-	Update getSubscriptionUpdate() const { return subscription_update_; }
+	// /// @brief Fetch a list of subscribers that are currently subscribed to a given topic in a [`FetchSubscribersRequest`]	
+	// void FetchSubscribers(google::protobuf::RpcController* controller,
+	// 	const ::uprotocol::core::usubscription::v3::FetchSubscribersRequest* request,
+	// 	::uprotocol::core::usubscription::v3::FetchSubscribersResponse* response,
+	// 	::google::protobuf::Closure* done) override;
 
 	/// @brief Destructor
-	~RpcClientUSubscription() = default;
+	~RpcClientUSubscription() override = default;
 
 	/// This section for test code only delete later
 
-protected:
+// protected:
 	/// @brief Constructor
 	///
 	/// @param transport Transport to register with.
 	/// @param subscriber_details Additional details about the subscriber.
-	RpcClientUSubscription(std::shared_ptr<transport::UTransport> transport,
-	         v1::UUri subscription_topic,
+	explicit RpcClientUSubscription(std::shared_ptr<transport::UTransport> transport,
 	         RpcClientUSubscriptionOptions rpc_client_usubscription_options = {});
 
 private:
@@ -190,28 +193,12 @@ private:
 
 	// Topic to subscribe to
 	const v1::UUri subscription_topic_;
+
 	// Additional details about uSubscription service
 	RpcClientUSubscriptionOptions rpc_client_usubscription_options_;
 
 	// URI info about the uSubscription service
 	USubscriptionUUriBuilder uSubscriptionUUriBuilder_;
-
-	// Subscription updates
-	std::unique_ptr<communication::NotificationSink> noficationSinkHandle_;
-	Update subscription_update_;
-
-	// RPC request
-	std::unique_ptr<communication::RpcClient> rpc_client_;
-	communication::RpcClient::InvokeHandle rpc_handle_;
-
-	SubscriptionResponse subscription_response_;
-	UnsubscribeResponse unsubscribe_response_;
-	FetchSubscriptionsResponse fetch_subscription_response_;
-	NotificationsResponse notification_response_;
-	FetchSubscribersResponse fetch_subscribers_response_;
-
-	// L2 Subscriber details
-	std::unique_ptr<communication::Subscriber> subscriber_;
 
 	// Allow the protected constructor for this class to be used in make_unique
 	// inside of create()
@@ -232,12 +219,6 @@ private:
 	/// @brief Create a notification sink to receive subscription updates
 	v1::UStatus createNotificationSink();
 
-	/// @brief Subscribe to the topic
-	///
-	void Subscribe(google::protobuf::RpcController* controller,
-		const ::uprotocol::core::usubscription::v3::SubscriptionRequest* request,
-		::uprotocol::core::usubscription::v3::SubscriptionResponse* response,
-		::google::protobuf::Closure* done) override;
 };
 
 }  // namespace uprotocol::core::usubscription::v3

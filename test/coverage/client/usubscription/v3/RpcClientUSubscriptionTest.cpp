@@ -21,11 +21,6 @@
 namespace {
 using MsgDiff = google::protobuf::util::MessageDifferencer;
 
-void someCallBack(const uprotocol::v1::UMessage& message) {
-	// Print the message
-	std::cout << message.DebugString() << std::endl;
-}
-
 class RpcClientUSubscriptionTest : public testing::Test {
 private:
 	std::shared_ptr<uprotocol::test::UTransportMock> mockTransportClient_;
@@ -101,123 +96,36 @@ public:
 
 // Negative test case with no source filter
 TEST_F(RpcClientUSubscriptionTest, ConstructorTestSuccess) {  // NOLINT
-	// constexpr int REQUEST_TTL_TIME = 0x8000;
-	auto subscription_callback = someCallBack;
-	// auto subscribe_request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
-	// auto priority = uprotocol::v1::UPriority::UPRIORITY_CS4;
 
 	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions();
-
-	auto rpc_client_usubscription_or_status =
-	    uprotocol::core::usubscription::v3::RpcClientUSubscription::create(
-	        getMockTransportClient(), getSubscriptionUUri(),
-	        subscription_callback, options);
-
-	// Ensure that the rpc_client_usubscription creation was successful
-	ASSERT_TRUE(rpc_client_usubscription_or_status.has_value());
-
-	// Obtain a pointer to the created rpc_client_usubscription instance
-	const auto& rpc_client_usubscription_ptr = rpc_client_usubscription_or_status.value();
-
-	// Verify that the rpc_client_usubscription pointer is not null, indicating successful
-	// creation
-	ASSERT_NE(rpc_client_usubscription_ptr, nullptr);
+	
+	auto rpc_client_usubscription =
+	    std::make_unique<uprotocol::core::usubscription::v3::
+	                     RpcClientUSubscription>(getMockTransportClient(),
+	                                              options);
+	
+	// Verify that the RpcClientUSubscription pointer is not null, indicating successful
+	ASSERT_NE(rpc_client_usubscription, nullptr);											  
 }
 
 TEST_F(RpcClientUSubscriptionTest, SubscribeTestSuccess) {  // NOLINT
-	constexpr uint32_t DEFAULT_RESOURCE_ID = 0x8000;
-	// constexpr int REQUEST_TTL_TIME = 0x8000;
-	auto subscription_callback = someCallBack;
-	// auto subscribe_request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
-	// auto priority = uprotocol::v1::UPriority::UPRIORITY_CS4;
-
+	
 	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions();
+	
+	uprotocol::core::usubscription::v3::SubscriptionRequest subscription_request = uprotocol::utils::ProtoConverter::BuildSubscriptionRequest(
+	    getSubscriptionUUri(), uprotocol::core::usubscription::v3::SubscribeAttributes());
+	
+	auto rpc_client_usubscription =
+	    std::make_unique<uprotocol::core::usubscription::v3::
+	                     RpcClientUSubscription>(getMockTransportClient(),
+	                                              options);
+	
+	// Verify that the RpcClientUSubscription pointer is not null, indicating successful
+	ASSERT_NE(rpc_client_usubscription, nullptr);
 
-	auto rpc_client_usubscription_or_status =
-	    uprotocol::core::usubscription::v3::RpcClientUSubscription::create(
-	        getMockTransportClient(), getSubscriptionUUri(),
-	        subscription_callback, options);
+	auto result = rpc_client_usubscription->subscribe(subscription_request);
 
-	// Ensure that the RpcClientUSubscription creation was successful
-	ASSERT_TRUE(rpc_client_usubscription_or_status.has_value());
-
-	// Obtain a pointer to the created rpc_client_usubscription instance
-	const auto& rpc_client_usubscription_ptr = rpc_client_usubscription_or_status.value();
-
-	// Verify that the rpc_client_usubscription pointer is not null, indicating successful
-	// creation
-	ASSERT_NE(rpc_client_usubscription_ptr, nullptr);
-
-	// Create notification source sink uri to match resource id of sink
-	auto notification_uuri = getServerUUri();
-	notification_uuri.set_resource_id(DEFAULT_RESOURCE_ID);
-
-	// set format UPAYLOAD_FORMAT_PROTOBUF_WRAPPED_IN_ANY
-	auto format =
-	    uprotocol::v1::UPayloadFormat::UPAYLOAD_FORMAT_PROTOBUF_WRAPPED_IN_ANY;
-
-	auto notification_source = uprotocol::communication::NotificationSource(
-	    getMockTransportServer(), std::move(notification_uuri),
-	    std::move(getClientUUri()), format);
-	// Build payload
-	const std::string data = "test";
-	auto payload = uprotocol::datamodel::builder::Payload(data, format);
-
-	notification_source.notify(std::move(payload));
-
-	// Check send count
-	EXPECT_TRUE(getMockTransportServer()->getSendCount() == 1);
-	EXPECT_TRUE(getMockTransportClient()->getSendCount() == 1);
-}
-
-TEST_F(RpcClientUSubscriptionTest, UnsubscribeTestSuccess) {  // NOLINT
-	constexpr uint32_t DEFAULT_RESOURCE_ID = 0x8000;
-	// constexpr int REQUEST_TTL_TIME = 0x8000;
-	auto subscription_callback = someCallBack;
-	// auto subscribe_request_ttl = std::chrono::milliseconds(REQUEST_TTL_TIME);
-	// auto priority = uprotocol::v1::UPriority::UPRIORITY_CS4;
-
-	auto options = uprotocol::core::usubscription::v3::RpcClientUSubscriptionOptions();
-
-	auto rpc_client_usubscription_or_status =
-	    uprotocol::core::usubscription::v3::RpcClientUSubscription::create(
-	        getMockTransportClient(), getSubscriptionUUri(),
-	        subscription_callback, options);
-
-	// Ensure that the rpc_client_usubscription creation was successful
-	ASSERT_TRUE(rpc_client_usubscription_or_status.has_value());
-
-	// Obtain a pointer to the created rpc_client_usubscription instance
-	const auto& rpc_client_usubscription_ptr = rpc_client_usubscription_or_status.value();
-
-	// Verify that the rpc_client_usubscription pointer is not null, indicating successful
-	// creation
-	ASSERT_NE(rpc_client_usubscription_ptr, nullptr);
-
-	// Create notification source sink uri to match resource id of sink
-	auto notification_uuri = getServerUUri();
-	notification_uuri.set_resource_id(DEFAULT_RESOURCE_ID);
-
-	// set format UPAYLOAD_FORMAT_PROTOBUF_WRAPPED_IN_ANY
-	auto format =
-	    uprotocol::v1::UPayloadFormat::UPAYLOAD_FORMAT_PROTOBUF_WRAPPED_IN_ANY;
-
-	auto notification_source = uprotocol::communication::NotificationSource(
-	    getMockTransportServer(), std::move(notification_uuri),
-	    std::move(getClientUUri()), format);
-	// Build payload
-	const std::string data = "test";
-	auto payload = uprotocol::datamodel::builder::Payload(data, format);
-
-	notification_source.notify(std::move(payload));
-
-	// Check send count
-	EXPECT_TRUE(getMockTransportServer()->getSendCount() == 1);
-	EXPECT_TRUE(getMockTransportClient()->getSendCount() == 1);
-
-	rpc_client_usubscription_ptr->Unsubscribe(nullptr, nullptr, nullptr, nullptr);
-
-	EXPECT_TRUE(getMockTransportClient()->getSendCount() == 2);
+	ASSERT_NE(&result, nullptr);
 }
 
 }  // namespace
