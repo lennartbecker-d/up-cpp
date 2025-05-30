@@ -12,11 +12,14 @@
 #ifndef UP_CPP_COMMUNICATION_RPCCLIENT_H
 #define UP_CPP_COMMUNICATION_RPCCLIENT_H
 
+#include <spdlog/spdlog.h>
 #include <up-cpp/datamodel/builder/Payload.h>
 #include <up-cpp/datamodel/builder/UMessage.h>
 #include <up-cpp/transport/UTransport.h>
 #include <up-cpp/utils/Expected.h>
+#include <up-cpp/utils/ProtoConverter.h>
 #include <uprotocol/v1/umessage.pb.h>
+#include <uprotocol/v1/uri.pb.h>
 #include <uprotocol/v1/ustatus.pb.h>
 
 #include <future>
@@ -25,6 +28,9 @@
 #include <variant>
 
 namespace uprotocol::communication {
+template <typename R>
+using ResponseOrStatus = utils::Expected<R, v1::UStatus>;
+using UnexpectedStatus = utils::Unexpected<v1::UStatus>;
 
 /// @brief Interface for uEntities to invoke RPC methods.
 ///
@@ -161,6 +167,39 @@ struct RpcClient {
 	///            message (if not OK).
 	///          * A UMessage containing the response from the RPC target.
 	[[nodiscard]] InvokeFuture invokeMethod();
+
+	template <typename T, typename R>
+	ResponseOrStatus<T> invokeProtoMethod(const R& request_message) {
+		auto payload_or_status =
+		    uprotocol::utils::ProtoConverter::protoToPayload(request_message);
+
+		if (!payload_or_status.has_value()) {
+			return ResponseOrStatus<T>(
+			    UnexpectedStatus(payload_or_status.error()));
+		}
+
+		datamodel::builder::Payload tmp_payload(payload_or_status.value());
+
+		auto message_or_status =
+		    this->invokeMethod(std::move(tmp_payload)).get();
+
+		if (!message_or_status.has_value()) {
+			return ResponseOrStatus<T>(
+			    UnexpectedStatus(message_or_status.error()));
+		}
+
+		auto response_or_status = utils::ProtoConverter::extractFromProtobuf<T>(
+		    message_or_status.value());
+
+		if (!response_or_status.has_value()) {
+			spdlog::error(
+			    "invokeProtoMethod: Error when extracting response from "
+			    "protobuf.");
+			return response_or_status;
+		}
+
+		return ResponseOrStatus<T>(response_or_status.value());
+	}
 
 	/// @brief Default move constructor (defined in RpcClient.cpp)
 	RpcClient(RpcClient&&) noexcept;
